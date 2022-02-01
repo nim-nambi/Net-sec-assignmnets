@@ -48,10 +48,10 @@ Rcon = (
 )
  
  
-def text_to_matrix(text):
+def text_to_matrix(txt):
     matrix = []
     for i in range(16):
-        byte = (text >> (8 * (15 - i))) & 0xFF
+        byte = (txt >> (8 * (15 - i))) & 0xFF
         if i % 4 == 0:
             matrix.append([byte])
         else:
@@ -60,18 +60,18 @@ def text_to_matrix(text):
  
  
 def matrix_to_text(matrix):
-    text = 0
+    txt = 0
     for i in range(4):
         for j in range(4):
-            text |= (matrix[i][j] << (120 - 8 * (4 * i + j)))
-    return text
+            txt |= (matrix[i][j] << (120 - 8 * (4 * i + j)))
+    return txt
  
  
 class AES:
     def __init__(self, master_key):
-        self.change_key(master_key)
+        self.key_gen(master_key)
  
-    def change_key(self, master_key):
+    def key_gen(self, master_key):
         self.round_keys = text_to_matrix(master_key)
  
         for i in range(4, 4 * 11):
@@ -94,14 +94,17 @@ class AES:
  
  
     def encrypt(self, plaintext):
+        print("\n\n\n-----------------------------")
+        print(" ENCRYPTION")
+        print("-----------------------------")
         self.plain_state = text_to_matrix(plaintext)
-        # print(self.plain_state)
+        print("Plain Text \n",self.plain_state,"\n")
         self.__add_round_key(self.plain_state, self.round_keys[:4])
  
-        print("\nENCRYPTION ROUND OUTPUTS \n")
         print("PRE-ROUND TRANSFORMATION")
         print(self.plain_state, "\n")
-   
+
+        print("\nENCRYPTION ROUND OUTPUTS")
  
         for i in range(1, 10):
             self.__round_encrypt(self.plain_state, self.round_keys[4 * i : 4 * (i + 1)])
@@ -112,31 +115,42 @@ class AES:
         self.__shift_rows(self.plain_state)
         self.__add_round_key(self.plain_state, self.round_keys[40:])
  
-        print("ROUND 10")
+        print("ROUND 10 ie. Cipher-text")
         print(self.plain_state, "\n")
         return matrix_to_text(self.plain_state)
  
     def decrypt(self, ciphertext):
+        print("\n\n\n-----------------------------")
+        print(" DECRYPTION")
+        print("-----------------------------")
+
         self.cipher_state = text_to_matrix(ciphertext)
-        print("DECRYPTION ROUND OUTPUTS \n")
+        print("\n Cipher-text")
+        print("-----------------------------\n")
+        print(self.cipher_state)
+
  
         self.__add_round_key(self.cipher_state, self.round_keys[40:])
-        print("PRE-ROUND TRANSFORMATION")
+        print("\nPRE-ROUND TRANSFORMATION")
+        print("-----------------------------\n")
         print(self.cipher_state, "\n")
  
         self.__inv_shift_rows(self.cipher_state)
         self.__inv_sub_bytes(self.cipher_state)
- 
-        print("ROUND 10")
+
+        print("\nDECRYPTION ROUND OUTPUTS")
+        print("-----------------------------\n")
+        print("ROUND 1")
         print(self.cipher_state, "\n")
  
         for i in range(9, 0, -1):
             self.__round_decrypt(self.cipher_state, self.round_keys[4 * i : 4 * (i + 1)])
-            print("ROUND ", i)
-            print(self.cipher_state, "\n")
+            if 11-i != 10:
+                print("ROUND ", 11-i)
+                print(self.cipher_state, "\n")
  
         self.__add_round_key(self.cipher_state, self.round_keys[:4])
- 
+        print ("ROUND 10 ie. Plain-text\n",self.cipher_state)
         return matrix_to_text(self.cipher_state)
  
     def __add_round_key(self, s, k):
@@ -177,7 +191,18 @@ class AES:
         a[1] ^= t ^ xtime(a[1] ^ a[2])
         a[2] ^= t ^ xtime(a[2] ^ a[3])
         a[3] ^= t ^ xtime(a[3] ^ u)
-   
+    
+    def __inv_mix_columns(self, s):
+        for i in range(4):
+            u = xtime(xtime(s[i][0] ^ s[i][2]))
+            v = xtime(xtime(s[i][1] ^ s[i][3]))
+            s[i][0] ^= u
+            s[i][1] ^= v
+            s[i][2] ^= u
+            s[i][3] ^= v
+        self.__mix_columns(s)
+
+
     def __sub_bytes(self, s):
         for i in range(4):
             for j in range(4):
@@ -193,15 +218,3 @@ class AES:
     def __mix_columns(self, s):
         for i in range(4):
             self.__mix_single_column(s[i])
- 
- 
-    def __inv_mix_columns(self, s):
-        for i in range(4):
-            u = xtime(xtime(s[i][0] ^ s[i][2]))
-            v = xtime(xtime(s[i][1] ^ s[i][3]))
-            s[i][0] ^= u
-            s[i][1] ^= v
-            s[i][2] ^= u
-            s[i][3] ^= v
- 
-        self.__mix_columns(s)
