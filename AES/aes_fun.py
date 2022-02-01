@@ -96,15 +96,20 @@ class AES:
     def encrypt(self, plaintext):
         print("\n\n\n-----------------------------")
         print(" ENCRYPTION")
-        print("-----------------------------")
+        print("-----------------------------\n")
         self.plain_state = text_to_matrix(plaintext)
-        print("Plain Text \n",self.plain_state,"\n")
-        self.__add_round_key(self.plain_state, self.round_keys[:4])
- 
+        
+        print("Plain Text")
+        print("-----------------------------")
+        print(self.plain_state,"\n")
+
+        self.__add_round_key(self.plain_state, self.round_keys[:4]) 
         print("PRE-ROUND TRANSFORMATION")
+        print("-----------------------------")
         print(self.plain_state, "\n")
 
         print("\nENCRYPTION ROUND OUTPUTS")
+        print("-----------------------------")
  
         for i in range(1, 10):
             self.__round_encrypt(self.plain_state, self.round_keys[4 * i : 4 * (i + 1)])
