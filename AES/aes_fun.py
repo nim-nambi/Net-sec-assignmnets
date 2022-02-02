@@ -125,7 +125,7 @@ class AES:
         return matrix_to_text(self.plain_state)
  
     def decrypt(self, ciphertext):
-        print("\n\n\n-----------------------------")
+        print("-----------------------------")
         print(" DECRYPTION")
         print("-----------------------------")
 
